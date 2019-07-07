@@ -1,0 +1,22 @@
+[Unit]
+Description=rtl_433 in a Docker container
+Requires=docker.service
+After=docker.service
+
+[Service]
+# Uncomment to have systemd automatically restart this process if it fails
+#Restart=always
+Environment='HOST=10.0.0.2'
+Environment='USER=homeassistant'
+Environment='PORT=1883'
+Environment='PASS=PASSWORDGOESHERE'
+# In case we didn't shut down properly, try to remove any container with the same name
+ExecStartPre=-/usr/bin/docker rm -f rtl_433
+ExecStart=/usr/bin/docker run --rm --net=host --device=/dev/bus/usb --name rtl_433 \
+	johnboiles/rtl_433 \
+	-F "mqtt://${HOST}:${PORT},user={$USER},pass=${PASS},retain=0,events=rtl_433/raw" \
+	-R 20
+ExecStop=/usr/bin/docker stop -t 2 rtl_433
+
+[Install]
+WantedBy=default.target
